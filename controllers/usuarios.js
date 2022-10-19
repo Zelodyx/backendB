@@ -82,4 +82,70 @@ const getUsersByID = async (req = request, res = response) =>{
             if(conn) conn.end() //Termina la conexion
         }
         }
-module.exports = {getUsers, getUsersByID, deleteUsersByID}
+
+        const adduser = async (req = request, res = response) =>{
+            const {Nombre, 
+                   Apellidos, 
+                   Edad, 
+                   Genero, 
+                   Usuario, 
+                   Contrasena, 
+                   Fecha_Nacimiento, 
+                   Activo} = req.body
+            
+            if(!Nombre|| 
+               !Apellidos|| 
+               !Edad|| 
+               !Genero|| 
+               !Usuario|| 
+               !Contrasena|| 
+               !Activo)
+            {
+                res.status(400).json({msg:"Faltan Datos"})
+                return
+            }
+            let conn;
+            
+            try{
+                conn = await pool.getConnection() //Realizamons la conexion
+        
+                //Generamos la consulta
+                const result = await conn.query(`INSERT INTO Usuarios(
+                    Nombre, 
+                    Apellidos, 
+                    Edad, 
+                    Genero, 
+                    Usuario, 
+                    Contrasena, 
+                    Fecha_Nacimiento, 
+                    Activo) 
+                VALUES(
+                    '${Nombre}', 
+                    '${Apellidos}', 
+                    ${Edad}, 
+                    '${Genero}', 
+                    '${Usuario}', 
+                    '${Contrasena}', 
+                    '${Fecha_Nacimiento}', 
+                    '${Activo}'
+                    )
+                    `, (error) => {if (error) throw error})
+        
+                if (result.affectedRows ===0){ //En caso de no haber registros lo informamos
+                    res.status(400).json({msg: `No se pudo agregar el usuario`})
+                    return
+                }
+        
+                res.json({msg:`Se agrego satisfactoriamente el usuario`}) //Se manda la lista de usuarios
+            }
+            catch(error){
+                console.log(error)
+                res.status(500).json({msg: error}) //Informamos el error
+            }
+            
+            finally{
+                if(conn) conn.end() //Termina la conexion
+            }
+            }
+
+module.exports = {getUsers, getUsersByID, deleteUsersByID, adduser}
