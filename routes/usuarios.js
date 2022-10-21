@@ -12,6 +12,9 @@ router.get("/id/:id", getUsersByID)
 ///POST///
 router.post("/", adduser)
 
+///PATCH///
+//router.patch("/", updateUser)
+
 ///DELETE///
 router.delete("/id/:id", deleteUsersByID)
 module.exports = router

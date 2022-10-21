@@ -109,6 +109,12 @@ const getUsersByID = async (req = request, res = response) =>{
             try{
                 conn = await pool.getConnection() //Realizamons la conexion
         
+                const [userExist] = await conn.query(`SELECT Usuario FROM Usuarios WHERE Usuario = '${Usuario}' `)
+
+                if(userExist){
+                    res.status(400).json({msg: `El Usuario ${Usuario} ya se encuntra registrado.`})
+                    return
+                }
                 //Generamos la consulta
                 const result = await conn.query(`INSERT INTO Usuarios(
                     Nombre, 
