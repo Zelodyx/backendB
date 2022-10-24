@@ -154,4 +154,117 @@ const getUsersByID = async (req = request, res = response) =>{
             }
             }
 
-module.exports = {getUsers, getUsersByID, deleteUsersByID, adduser}
+        const updateuser = async (req = request, res = response) =>{
+            const {id} = req.params
+            const {Nombre,
+                   Apellidos, 
+                   Edad,
+                   Genero, 
+                   Usuario, 
+                   Contrasena, 
+                   Fecha_Nacimiento
+                   } = req.body
+            
+            if(!Nombre||
+                !Apellidos||
+                !Edad|| 
+                !Genero|| 
+                !Usuario|| 
+                !Contrasena||
+                !Fecha_Nacimiento 
+               )
+            {
+                res.status(400).json({msg:"Faltan Datos"})
+                return
+            }
+            let conn;
+            
+            try{
+                conn = await pool.getConnection() //Realizamons la conexion
+        
+                //Generamos la consulta
+                const result = await conn.query(`UPDATE Usuarios SET 
+                Nombre = '${Nombre}',
+                Apellidos = '${Apellidos}', 
+                Edad = ${Edad},
+                Genero = '${Genero}', 
+                Usuario = '${Usuario}', 
+                Contrasena = '${Contrasena}',
+                Fecha_Nacimiento = '${Fecha_Nacimiento}' 
+                WHERE ID = ${id}`, (error) => {if (error) throw error})
+        
+                if (result.affectedRows ===0){ //En caso de no haber registros lo informamos
+                    res.status(400).json({msg: `No se pudo modificar el usuario`})
+                    return
+                }
+        
+                res.json({msg:`Se modifico satisfactoriamente el usuario`}) //Se manda la lista de usuarios
+            }
+            catch(error){
+                console.log(error)
+                res.status(500).json({msg: error}) //Informamos el error
+            }
+            
+            finally{
+                if(conn) conn.end() //Termina la conexion
+            }
+            }
+
+            const updateUserByUsuario = async (req = request, res = response) =>{
+                const {Nombre, 
+                       Apellidos, 
+                       Edad, 
+                       Genero, 
+                       Usuario,  
+                       Fecha_Nacimiento = '2000-01-01'
+                       } = req.body
+                
+                if(!Nombre|| 
+                   !Apellidos|| 
+                   !Edad|| 
+                   !Usuario
+                    )
+                {
+                    res.status(400).json({msg:"Faltan Datos"})
+                    return
+                }
+                let conn;
+                
+                try{
+                    conn = await pool.getConnection() //Realizamons la conexion
+            
+                    const [userExist] = await conn.query(`SELECT Usuario FROM Usuarios WHERE Usuario = '${Usuario}' `)
+    
+                    if(!userExist){
+                        res.status(400).json({msg: `El Usuario ${Usuario} no se encuntra registrado.`})
+                        return
+                    }
+                    //Generamos la consulta
+                    const result = await conn.query(`UPDATE Usuarios SET
+                        Nombre = '${Nombre}',
+                        Apellidos = '${Apellidos}', 
+                        Edad = ${Edad},
+                        ${Genero ? `Genero = '${Genero}',` : ''}
+                        Fecha_Nacimiento = '${Fecha_Nacimiento}' 
+                        WHERE Usuario = '${Usuario}'      
+                        `, (error) => {if (error) throw error})
+            
+                    if (result.affectedRows ===0){ //En caso de no haber registros lo informamos
+                        res.status(400).json({msg: `No se pudo actualizar el usuario`})
+                        return
+                    }
+            
+                    res.json({msg:`Se actualizo satisfactoriamente el usuario`}) //Se manda la lista de usuarios
+                }
+                catch(error){
+                    console.log(error)
+                    res.status(500).json({msg: error}) //Informamos el error
+                }
+                
+                finally{
+                    if(conn) conn.end() //Termina la conexion
+                }
+                }
+    
+
+module.exports = {getUsers, getUsersByID, deleteUsersByID, adduser, updateuser, updateUserByUsuario}
