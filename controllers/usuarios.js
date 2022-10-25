@@ -1,4 +1,5 @@
 const { request, response } = require("express");
+const bcryptjs = require("bcryptjs")
 const pool = require("../db/connection");
 //http://localhost:4000/api/v1/usuarios
 const getUsers= async (req = request, res = response) => {
@@ -104,6 +105,10 @@ const getUsersByID = async (req = request, res = response) =>{
                 res.status(400).json({msg:"Faltan Datos"})
                 return
             }
+
+            const salt = bcryptjs.genSaltSync()
+            const contrasenaCifrada = bcryptjs.hashSync(Contrasena, salt)
+        
             let conn;
             
             try{
@@ -131,7 +136,7 @@ const getUsersByID = async (req = request, res = response) =>{
                     ${Edad}, 
                     '${Genero}', 
                     '${Usuario}', 
-                    '${Contrasena}', 
+                    '${contrasenaCifrada}', 
                     '${Fecha_Nacimiento}', 
                     '${Activo}'
                     )
