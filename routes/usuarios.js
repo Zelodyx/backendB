@@ -1,5 +1,5 @@
 const {Router} = require("express")
-const{getUsers, getUsersByID, deleteUsersByID, adduser, updateuser, updateUserByUsuario} = require("../controllers/usuarios")
+const{getUsers, getUsersByID, deleteUsersByID, adduser, updateuser, updateUserByUsuario, singIn, changepass} = require("../controllers/usuarios")
 const router = Router()
 
 //http://localhost:4000/api/v1/usuarios
@@ -11,6 +11,8 @@ router.get("/id/:id", getUsersByID)
 
 ///POST///
 router.post("/", adduser)
+router.post("/singing", singIn)
+router.post("/changepass", changepass)
 
 ///PATCH///
 router.patch("/id/:id", updateuser)
