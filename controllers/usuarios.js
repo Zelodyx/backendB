@@ -1,6 +1,8 @@
 const { request, response } = require("express");
 const bcryptjs = require("bcryptjs")
 const pool = require("../db/connection");
+const modelUsuarios = require("../models/usuarios");
+const { queryUserExists } = require("../models/usuarios");
 //http://localhost:4000/api/v1/usuarios
 const getUsers= async (req = request, res = response) => {
     let conn;
@@ -9,7 +11,7 @@ const getUsers= async (req = request, res = response) => {
         conn = await pool.getConnection() //Realizamons la conexion
 
         //Generamos la consulta
-        const users = await conn.query("SELECT * FROM Usuarios", (error) => {if (error) throw error})
+        const users = await conn.query(modelUsuarios.queryGetUsers, (error) => {if (error) throw error})
 
         if (users.length===0){ //En caso de no haber registros lo informamos
             res.status(404).json({msg: "No existen usuarios registrados"})
@@ -38,7 +40,7 @@ const getUsersByID = async (req = request, res = response) =>{
         conn = await pool.getConnection() //Realizamons la conexion
 
         //Generamos la consulta
-        const [user] = await conn.query(`SELECT * FROM Usuarios WHERE ID = ${id}`, (error) => {if (error) throw error})
+        const [user] = await conn.query(modelUsuarios.queryGetUsersByID, [id], (error) => {if (error) throw error})
 
         if (!user){ //En caso de no haber registros lo informamos
             res.status(404).json({msg: `No existen usuario registrado con el ID ${id}`})
@@ -65,7 +67,7 @@ const getUsersByID = async (req = request, res = response) =>{
             conn = await pool.getConnection() //Realizamons la conexion
     
             //Generamos la consulta
-            const result = await conn.query(`UPDATE Usuarios SET Activo = 'N' WHERE ID = ${id}`, (error) => {if (error) throw error})
+            const result = await conn.query(modelUsuarios.queryDeleteUsersByID, [id], (error) => {if (error) throw error})
     
             if (result.affectedRows ===0){ //En caso de no haber registros lo informamos
                 res.status(404).json({msg: `No existen usuario registrado con el ID ${id}`})
@@ -182,6 +184,10 @@ const getUsersByID = async (req = request, res = response) =>{
                 res.status(400).json({msg:"Faltan Datos"})
                 return
             }
+
+            const salt = bcryptjs.genSaltSync()
+            const contrasenaCifrada = bcryptjs.hashSync(Contrasena, salt)
+
             let conn;
             
             try{
@@ -194,7 +200,7 @@ const getUsersByID = async (req = request, res = response) =>{
                 Edad = ${Edad},
                 Genero = '${Genero}', 
                 Usuario = '${Usuario}', 
-                Contrasena = '${Contrasena}',
+                Contrasena = '${contrasenaCifrada}',
                 Fecha_Nacimiento = '${Fecha_Nacimiento}' 
                 WHERE ID = ${id}`, (error) => {if (error) throw error})
         
