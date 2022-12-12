@@ -1,8 +1,7 @@
 const { request, response } = require("express");
 const bcryptjs = require("bcryptjs")
 const pool = require("../db/connection");
-const modelUsuarios = require("../models/usuarios");
-const { queryUserExists } = require("../models/usuarios");
+const {modelUsuarios, updateuserp} = require("../models/usuarios");
 //http://localhost:4000/api/v1/usuarios
 const getUsers= async (req = request, res = response) => {
     let conn;
@@ -116,33 +115,22 @@ const getUsersByID = async (req = request, res = response) =>{
             try{
                 conn = await pool.getConnection() //Realizamons la conexion
         
-                const [userExist] = await conn.query(`SELECT Usuario FROM Usuarios WHERE Usuario = '${Usuario}' `)
+                const [userExist] = await conn.query(modelUsuarios.queryUserExists, [Usuario])
 
                 if(userExist){
                     res.status(400).json({msg: `El Usuario ${Usuario} ya se encuntra registrado.`})
                     return
                 }
-                //Generamos la consulta
-                const result = await conn.query(`INSERT INTO Usuarios(
-                    Nombre, 
+                /*console.log({Nombre, 
                     Apellidos, 
                     Edad, 
                     Genero, 
                     Usuario, 
                     Contrasena, 
                     Fecha_Nacimiento, 
-                    Activo) 
-                VALUES(
-                    '${Nombre}', 
-                    '${Apellidos}', 
-                    ${Edad}, 
-                    '${Genero}', 
-                    '${Usuario}', 
-                    '${contrasenaCifrada}', 
-                    '${Fecha_Nacimiento}', 
-                    '${Activo}'
-                    )
-                    `, (error) => {if (error) throw error})
+                    Activo, query: modelUsuarios.queryAddUser})*/
+                //Generamos la consulta
+                const result = await conn.query(modelUsuarios.queryAddUser, [Nombre, Apellidos, Edad, Genero, Usuario, contrasenaCifrada, Fecha_Nacimiento, Activo], (error) => {if (error) throw error})
         
                 if (result.affectedRows ===0){ //En caso de no haber registros lo informamos
                     res.status(400).json({msg: `No se pudo agregar el usuario`})
@@ -244,21 +232,19 @@ const getUsersByID = async (req = request, res = response) =>{
                 try{
                     conn = await pool.getConnection() //Realizamons la conexion
             
-                    const [userExist] = await conn.query(`SELECT Usuario FROM Usuarios WHERE Usuario = '${Usuario}' `)
+                    const [userExist] = await conn.query(modelUsuarios.queryUserExists,[Usuario])
     
                     if(!userExist){
                         res.status(400).json({msg: `El Usuario ${Usuario} no se encuntra registrado.`})
                         return
                     }
                     //Generamos la consulta
-                    const result = await conn.query(`UPDATE Usuarios SET
-                        Nombre = '${Nombre}',
-                        Apellidos = '${Apellidos}', 
-                        Edad = ${Edad},
-                        ${Genero ? `Genero = '${Genero}',` : ''}
-                        Fecha_Nacimiento = '${Fecha_Nacimiento}' 
-                        WHERE Usuario = '${Usuario}'      
-                        `, (error) => {if (error) throw error})
+                    const result = await conn.query(updateuserp(Nombre,
+                        Apellidos, 
+                        Edad,
+                        Genero, 
+                        Usuario, 
+                        Fecha_Nacimiento), (error) => {if (error) throw error})
             
                     if (result.affectedRows ===0){ //En caso de no haber registros lo informamos
                         res.status(400).json({msg: `No se pudo actualizar el usuario`})
@@ -291,11 +277,8 @@ const getUsersByID = async (req = request, res = response) =>{
                         conn = await pool.getConnection() //Realizamons la conexion
                 
                         //Generamos la consulta
-                        const [user] = await conn.query(`SELECT Contrasena, 
-                                                        Activo FROM Usuarios 
-                                                        WHERE Usuario = '${Usuario}'
-                                                        `, (error) => {if (error) throw error})
-                        if(!user || user.Activo === 'N'){
+                        const [user] = await conn.query(modelUsuarios.querySingIn, [Usuario], (error) => {if (error) throw error})
+                        if(!user){
                             res.status(403).json({msg: "El usuario o contraseña que se ingresó no son validos"})
                             return
                         }
@@ -334,10 +317,7 @@ const getUsersByID = async (req = request, res = response) =>{
                             conn = await pool.getConnection() //Realizamons la conexion
                     
                             //Generamos la consulta
-                            const [user] = await conn.query(`SELECT Contrasena 
-                                                            FROM Usuarios 
-                                                            WHERE Usuario = '${Usuario}'
-                                                            `, (error) => {if (error) throw error})
+                            const [user] = await conn.query(modelUsuarios.queryUpdatepass1,[Usuario], (error) => {if (error) throw error})
                             
                             if(!user){
                             res.status(403).json({msg: "Usuario o contraseña incorrectos"})
@@ -354,9 +334,7 @@ const getUsersByID = async (req = request, res = response) =>{
     
                             }
 
-                            const result = await conn.query(`UPDATE Usuarios SET 
-                                                            Contrasena = '${contrasenaCifrada2}' 
-                                                            WHERE Usuario = '${Usuario}'`, (error) => {if (error) throw error})
+                            const result = await conn.query(modelUsuarios.queryUpdatepass2,[contrasenaCifrada2, Usuario], (error) => {if (error) throw error})
                             
                             res.json({msg:`La contraseña se ha modificado correctamente`}) //Se manda la lista de usuarios
                         }
